@@ -1,5 +1,7 @@
 import os
-from datetime import date, datetime
+import socket
+from datetime import date
+from datetime import datetime
 from datetime import timezone as tz
 
 from jinja2 import ChoiceLoader, FileSystemLoader
@@ -199,6 +201,8 @@ class SignUpHandler(LocalBase):
         otp_secret, user_2fa = "", ""
         if user:
             otp_secret = user.otp_secret
+            host = socket.gethostname()
+            otp_uri = f'otpauth://totp/{user.username}@{host}?secret={otp_secret}&issuer={host}'
             user_2fa = user.has_2fa
 
         html = await self.render_template(
@@ -208,7 +212,7 @@ class SignUpHandler(LocalBase):
             alert=alert,
             two_factor_auth=self.authenticator.allow_2fa,
             two_factor_auth_user=user_2fa,
-            two_factor_auth_value=otp_secret,
+            two_factor_auth_value=otp_uri,
             recaptcha_key=self.authenticator.recaptcha_key,
             tos=self.authenticator.tos,
         )
