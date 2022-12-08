@@ -14,16 +14,15 @@ from tornado import web
 from traitlets import Bool, Dict, Integer, Tuple, Unicode
 
 from .crypto.signing import Signer
-from .handlers import (
-    AuthorizationAreaHandler,
-    ChangePasswordAdminHandler,
-    ChangePasswordHandler,
-    DiscardHandler,
-    EmailAuthorizationHandler,
-    LoginHandler,
-    SignUpHandler,
-    ToggleAuthorizationHandler,
-)
+from .handlers import AuthorizationAreaHandler
+from .handlers import ChangePasswordAdminHandler
+from .handlers import ChangePasswordHandler
+from .handlers import Change2FAHandler
+from .handlers import DiscardHandler
+from .handlers import EmailAuthorizationHandler
+from .handlers import LoginHandler
+from .handlers import SignUpHandler
+from .handlers import ToggleAuthorizationHandler
 from .orm import UserInfo
 
 
@@ -164,7 +163,9 @@ class NativeAuthenticator(Authenticator):
         help="Deletes FirstUse Authenticator database after the import",
     )
 
-    allow_2fa = Bool(False, config=True, help="")
+    allow_2fa = Bool(False, config=True, help="Permit new users to be created with two-factor authentication.")
+
+    use_google_libpam = Bool(False, config=True, help="Link JupyterHub 2FA to the Google Authenticator PAM Module.")
 
     def __init__(self, add_new_table=True, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -386,6 +387,22 @@ class NativeAuthenticator(Authenticator):
         self.db.commit()
         return True
 
+    def change_2fa(self, username):
+        user = self.get_user(username)
+
+        if user is None:
+            return
+
+        if user.has_2fa:
+            user.has_2fa = False
+            user.otp_secret = ""
+        else:
+            user.has_2fa = True
+            user.otp_secret = user.get_otp_secret(self.use_google_libpam)
+
+        self.db.commit()
+        return True
+
     def validate_username(self, username):
         invalid_chars = [",", " ", "/"]
         if any((char in username) for char in invalid_chars):
@@ -403,6 +420,7 @@ class NativeAuthenticator(Authenticator):
             (r"/confirm/([^/]*)", EmailAuthorizationHandler),
             (r"/change-password", ChangePasswordHandler),
             (r"/change-password/([^/]+)", ChangePasswordAdminHandler),
+            (r"/change-2fa", Change2FAHandler)
         ]
         return native_handlers
 
