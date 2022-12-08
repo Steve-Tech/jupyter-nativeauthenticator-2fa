@@ -9,6 +9,12 @@ from jupyterhub.orm import Base
 from sqlalchemy import Boolean, Column, Integer, LargeBinary, String
 from sqlalchemy.orm import validates
 
+def get_user_home(username):
+    with open('/etc/passwd', 'r') as f:
+        for line in f:
+            if username in line:
+                return line.split(':')[5]
+    raise KeyError(f"{username} not found in /etc/passwd")
 
 class UserInfo(Base):
     """
@@ -54,7 +60,7 @@ class UserInfo(Base):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         if self.has_2fa and not self.otp_secret:
-            google_auth = f"{os.path.expanduser(self.username)}/.google_authenticator"
+            google_auth = f"{get_user_home(self.username)}/.google_authenticator"
             if not os.path.exists(google_auth):
                 os.system("google-authenticator" +
                     f" --secret={google_auth}" +
