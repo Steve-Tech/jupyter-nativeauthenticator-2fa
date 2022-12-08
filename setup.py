@@ -25,11 +25,7 @@ setup(
             "native = nativeauthenticator:NativeAuthenticator",
         ],
     },
-    install_requires=[
-        "jupyterhub>=1.3",
-        "bcrypt",
-        "onetimepass",
-    ],
+    install_requires=["jupyterhub>=1.3", "bcrypt", "pyotp", "qrcode"],
     extras_require={
         "test": [
             "notebook>=6.4.1",
