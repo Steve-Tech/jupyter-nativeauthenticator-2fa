@@ -1,13 +1,14 @@
 import os
 import re
-import socket
 import shutil
+import socket
 
 import bcrypt
 import pyotp
 from jupyterhub.orm import Base
 from sqlalchemy import Boolean, Column, Integer, LargeBinary, String
 from sqlalchemy.orm import validates
+
 
 class UserInfo(Base):
     """
@@ -90,16 +91,20 @@ class UserInfo(Base):
         """
         if self.has_2fa:
             if not self.otp_secret:
-                google_libpam_installed = True if shutil.which('google-authenticator') else False
+                google_libpam_installed = (
+                    True if shutil.which("google-authenticator") else False
+                )
                 if use_google_libpam and google_libpam_installed:
                     google_auth_file = f"{os.path.expanduser(f'~{self.username}')}/.google_authenticator"
                     if not os.path.exists(google_auth_file):
-                        os.system("google-authenticator" +
-                            f" --secret={google_auth_file}" +
-                            " --quiet --force --no-confirm" +
-                            " --time-based --allow-reuse --window-size=3" +
-                            " --rate-limit=3 --rate-time=30")
-                    with open(google_auth_file, 'r') as f:
+                        os.system(
+                            "google-authenticator"
+                            + f" --secret={google_auth_file}"
+                            + " --quiet --force --no-confirm"
+                            + " --time-based --allow-reuse --window-size=3"
+                            + " --rate-limit=3 --rate-time=30"
+                        )
+                    with open(google_auth_file) as f:
                         otp_secret = f.readline().strip("\n")
                 else:
                     otp_secret = pyotp.random_base32()
@@ -108,7 +113,6 @@ class UserInfo(Base):
         else:
             otp_secret = ""
         return otp_secret
-        
 
     def is_valid_password(self, password):
         """
@@ -142,7 +146,7 @@ class UserInfo(Base):
         """
         if self.has_2fa:
             host = socket.gethostname()
-            otp_uri = f'otpauth://totp/{self.username}@{host}?secret={self.otp_secret}&issuer={host}'
+            otp_uri = f"otpauth://totp/{self.username}@{host}?secret={self.otp_secret}&issuer={host}"
             totp = pyotp.parse_uri(otp_uri)
             return totp.verify(token)
         return True
