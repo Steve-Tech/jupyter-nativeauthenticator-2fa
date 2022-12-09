@@ -17,6 +17,7 @@ from .crypto.signing import Signer
 from .handlers import AuthorizationAreaHandler
 from .handlers import ChangePasswordAdminHandler
 from .handlers import ChangePasswordHandler
+from .handlers import Change2FAAdminHandler
 from .handlers import Change2FAHandler
 from .handlers import DiscardHandler
 from .handlers import EmailAuthorizationHandler
@@ -420,7 +421,8 @@ class NativeAuthenticator(Authenticator):
             (r"/confirm/([^/]*)", EmailAuthorizationHandler),
             (r"/change-password", ChangePasswordHandler),
             (r"/change-password/([^/]+)", ChangePasswordAdminHandler),
-            (r"/change-2fa", Change2FAHandler)
+            (r"/change-2fa", Change2FAHandler),
+            (r"/change-2fa/([^/]+)", Change2FAAdminHandler)
         ]
         return native_handlers
 
