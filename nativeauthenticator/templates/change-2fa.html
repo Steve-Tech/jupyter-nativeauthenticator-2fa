@@ -25,6 +25,7 @@
         <h1>
             Enable/disable two factor authentication
         </h1>
+        <input type="hidden" name="_xsrf" value="{{ xsrf }}"/>
 
         {% if two_factor_auth_require %}
         <p>
